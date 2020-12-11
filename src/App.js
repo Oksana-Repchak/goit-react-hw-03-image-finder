@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
-// import axios from 'axios';
 import Loader from 'react-loader-spinner';
 import articlesApi from './services/articlesApi';
+import Searchbar from './components/Searchbar';
 
-const ArticleList = ({ articles }) => (
-  <ul>
-    {articles.map(({ objectID, url, title }) => (
-      <li key={objectID}>
-        <a href={url} target="_blank" rel="noreferrer noopener">
-          {title}
-        </a>
+const ImageGallery = ({ hits }) => (
+  <ul className="ImageGallery">
+    {hits.map(({ id, webformatURL, title }) => (
+      <li key={id}>
+        <img
+          src={webformatURL}
+          // data-source={{ largeImageURL }}
+          alt={title}
+        />
       </li>
     ))}
   </ul>
@@ -17,47 +19,72 @@ const ArticleList = ({ articles }) => (
 
 class App extends Component {
   state = {
-    articles: [],
+    searchQuery: '',
+    hits: [],
+    currentPage: 1,
     isLoading: false,
     error: null,
   };
 
-  // componentDidMount() {
-  //   this.setState({ isLoading: true });
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.searchQuery !== this.state.searchQuery) {
+      this.fetchArticles();
+    }
+  }
 
-  //   axios
-  //     .get('https://hn.algolia.com/api/v1/search?query=react')
-  //     .then(response => this.setState({ articles: response.data.hits }))
-  //     .catch(error => this.setState({ error }))
-  //     .finally(() => this.setState({ isLoading: false }));
-  // }
+  onChangeQuery = query => {
+    this.setState({
+      searchQuery: query,
+      currentPage: 1,
+      hits: [],
+      error: null,
+    });
+  };
 
-  componentDidMount() {
+  fetchArticles = () => {
+    const { currentPage, searchQuery } = this.state;
+    const options = { searchQuery, currentPage };
+
     this.setState({ isLoading: true });
 
     articlesApi
-      .fetchArticlesWithQuery('react')
-      .then(articles => this.setState({ articles }))
+      .fetchImages(options)
+      .then(hits => {
+        this.setState(prevState => ({
+          hits: [...prevState.hits, ...hits],
+          currentPage: prevState.currentPage + 1,
+        }));
+      })
       .catch(error => this.setState({ error }))
       .finally(() => this.setState({ isLoading: false }));
-  }
-
+  };
   render() {
-    const { articles, isLoading, error } = this.state;
+    const { hits, isLoading, error } = this.state;
+    const shouldRenderLoadMoreButton = hits.length > 0 && !isLoading;
 
     return (
       <>
         {error && <p>Whoops, something went wrong: {error.message}</p>}
+
+        <Searchbar onSubmit={this.onChangeQuery} />
+
+        {hits.length > 0 && <ImageGallery hits={hits} />}
+
         {isLoading && (
           <Loader
-            type="TailSpin"
+            type="Hearts"
             color="#00BFFF"
             height={100}
             width={100}
             timeout={3000} //3 secs
           />
         )}
-        {articles.length > 0 && <ArticleList articles={articles} />}
+
+        {shouldRenderLoadMoreButton && (
+          <button type="button" onClick={this.fetchArticles}>
+            Загрузить ещё
+          </button>
+        )}
       </>
     );
   }
