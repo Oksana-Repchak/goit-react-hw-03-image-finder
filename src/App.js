@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
-import Loader from 'react-loader-spinner';
+import { ToastContainer } from 'react-toastify';
 
 import imagesServices from './services/imagesServices';
 import Searchbar from './components/Searchbar';
 import ImageGallery from './components/ImageGallery';
+import Button from './components/Button';
+import Loader from './components/Loader';
 
 class App extends Component {
   state = {
@@ -36,7 +38,7 @@ class App extends Component {
     this.setState({ isLoading: true });
 
     imagesServices
-      .fetchImages(options)
+      .fetchImagesAPI(options)
       .then(images => {
         this.setState(prevState => ({
           images: [...prevState.images, ...images],
@@ -54,22 +56,18 @@ class App extends Component {
     return (
       <>
         {error && <p>Whoops, something went wrong: {error.message}</p>}
+
         <Searchbar onSubmit={this.onChangeQuery} />
+
         <ImageGallery images={this.state.images} />
-        {isLoading && (
-          <Loader
-            type="Hearts"
-            color="#00BFFF"
-            height={100}
-            width={100}
-            timeout={3000}
-          />
-        )}
+
+        {isLoading && <Loader />}
+
         {shouldRenderLoadMoreButton && (
-          <button type="button" onClick={this.fetchImages}>
-            Загрузить ещё
-          </button>
+          <Button fetchImages={this.fetchImages} />
         )}
+
+        <ToastContainer autoClose={3000} />
       </>
     );
   }
