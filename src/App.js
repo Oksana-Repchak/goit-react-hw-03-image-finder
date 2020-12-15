@@ -44,6 +44,10 @@ class App extends Component {
           images: [...prevState.images, ...images],
           currentPage: prevState.currentPage + 1,
         }));
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth',
+        });
       })
       .catch(error => this.setState({ error }))
       .finally(() => this.setState({ isLoading: false }));
